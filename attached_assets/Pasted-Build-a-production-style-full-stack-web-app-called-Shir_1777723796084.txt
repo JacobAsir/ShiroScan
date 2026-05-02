@@ -1,0 +1,356 @@
+Build a production-style full-stack web app called “ShiroScan”.
+
+High-level goal:
+ShiroScan is a Japan-first utility AI product that helps users scan Japanese packaged food labels and quickly understand whether the product is safe for their allergies or diet preferences.
+
+This version should be stateless and should NOT use any database, authentication, or Supabase.
+Do not add login, user accounts, saved history, cloud storage, or persistent profiles.
+All analysis should happen per request.
+The app should feel like a reliable consumer utility, not a generic chatbot.
+
+Primary user problem:
+Japanese food labels are often dense, small, and hard to interpret quickly.
+Users need a fast, trustworthy answer with visible proof, especially for allergy, ingredient, and dietary concerns.
+
+Target users:
+- Japanese consumers who want easier label understanding
+- Foreign residents in Japan
+- Travelers in Japan
+- People with food allergies
+- Users with dietary preferences like vegetarian, halal, no pork, lactose-free
+
+Non-goals for MVP:
+- Do not build a general AI assistant
+- Do not add database or auth
+- Do not support all product categories initially
+- Do not make medical claims
+- Do not overuse agentic workflows or complex orchestration in v1
+- Keep v1 focused on packaged food labels only
+
+Tech stack:
+Frontend:
+- Next.js 14+ with TypeScript
+- App Router
+- Tailwind CSS
+- shadcn/ui or similarly clean component approach
+- Mobile-first responsive design
+
+Backend:
+- Python FastAPI service for OCR parsing, label analysis, and AI workflow orchestration
+- Separate Python service folder with modular architecture
+- Pydantic models for request/response schemas
+- Async-ready backend code
+- Clear service boundaries between OCR, parsing, rule engine, and LLM summarization
+
+AI / model usage:
+- Use Gemini models for vision-related tasks where useful, such as extracting text or understanding label images
+- Use Groq-hosted LLMs for fast text reasoning, bilingual summarization, and explanation generation
+- Build provider abstraction so models can be swapped later
+- Support mock/fallback mode when API keys are not present
+
+Architecture requirement:
+This must be built like a real product, not a monolithic demo app.
+Use a clean layered architecture.
+
+Frontend app:
+- app/
+- components/
+- lib/
+- hooks/
+- types/
+- services/
+
+Python backend:
+- backend/app/main.py
+- backend/app/api/
+- backend/app/core/
+- backend/app/services/
+- backend/app/models/
+- backend/app/schemas/
+- backend/app/utils/
+- backend/tests/
+
+Use a gateway pattern:
+- frontend calls backend API
+- backend handles OCR + analysis + explanation
+- backend returns structured result to frontend
+- no database writes
+- no persistent storage
+- file handling should be temporary only
+
+Required product behavior:
+The user uploads or takes a photo of a Japanese packaged food label.
+The app:
+1. validates the file
+2. temporarily processes the image
+3. extracts text from the image
+4. identifies allergens and dietary conflicts
+5. interprets important Japanese phrases
+6. generates a result:
+   - Safe
+   - Caution
+   - Avoid
+7. explains why in English and Japanese
+8. shows extracted proof text and confidence
+9. returns the result without saving user data permanently
+
+Core MVP features:
+
+1. Landing page
+- Clear product explanation in 1 sentence
+- Show who it is for
+- Explain the scan process in 3 simple steps
+- Show trust messaging:
+  - transparent results
+  - bilingual explanation
+  - evidence-based analysis
+- CTA to start scanning
+
+2. Preferences panel (session-only, frontend state only)
+Allow users to choose for the current session:
+- allergies:
+  egg, milk, wheat, shrimp, crab, peanuts, buckwheat, walnuts, soy, sesame
+- dietary preferences:
+  vegetarian, halal, no pork, lactose-free
+- interface language:
+  English or Japanese
+
+Important:
+- Do not save these settings in a database
+- Do not require login
+- Keep them only in frontend state, URL state, or in-memory session state
+- If local browser storage is used, make it optional and minimal; do not depend on it
+
+3. Scan flow
+- Camera capture and image upload support
+- Mobile-friendly image preview
+- Upload progress state
+- Call backend /api/analyze endpoint
+- Handle low-confidence OCR and blurry-image failure cases gracefully
+- Process image in temporary memory or temp file only
+
+4. Result page
+Show:
+- overall status badge: Safe / Caution / Avoid
+- confidence score
+- detected product name if available
+- matched allergens
+- matched dietary conflicts
+- extracted Japanese keywords/phrases that triggered the decision
+- plain-language explanation in English
+- plain-language explanation in Japanese
+- expandable OCR text section
+- disclaimer:
+  “This app provides assistive information only and is not medical advice.”
+
+5. Demo / sample mode
+- Add 3 to 5 built-in sample label cases
+- User can try demo scans without uploading an image
+- Demo mode should work fully without API keys
+
+Analysis pipeline requirements:
+Build the backend pipeline in this order:
+
+Step 1: Image intake
+- validate image type and size
+- basic quality checks if possible
+- use temporary file or in-memory file handling only
+- clean up temp files after processing
+
+Step 2: OCR / extraction
+- Build OCR provider abstraction
+- Support:
+  - mock provider
+  - Gemini-based extraction provider
+- Normalize extracted output into a standard schema
+
+Step 3: Rule engine
+- Implement deterministic matching first
+- Detect known allergen keywords and caution phrases
+- Detect dietary conflicts using a configurable keyword ruleset
+
+Step 4: Optional LLM summarization
+- Use Groq LLM to convert structured findings into short user-facing explanations
+- Must not invent unsupported claims
+- Summaries must cite extracted evidence internally in the generated object
+- If LLM fails, fallback to template-based explanation
+
+Step 5: Decision engine
+- Return Safe / Caution / Avoid using explicit rule logic
+- Use confidence and evidence thresholds
+- If evidence is weak, prefer Caution over overconfident Safe
+
+Important Japanese keyword support:
+Detect at minimum:
+- 卵
+- 乳
+- 乳成分
+- 小麦
+- えび
+- かに
+- 落花生
+- そば
+- くるみ
+- 大豆
+- ごま
+
+Important phrase patterns:
+- 一部に〜を含む
+- を含む
+- 同一工場で〜を含む製品を製造しています
+- 本品製造工場では〜を含む製品を生産しています
+
+API design:
+Frontend should call backend REST API.
+Create endpoints like:
+- POST /api/analyze
+- GET /api/health
+- GET /api/demo-samples
+
+POST /api/analyze should accept:
+- image file
+- current session preferences as JSON payload or form fields
+
+Response from POST /api/analyze should be typed and structured like:
+{
+  "product_name": "string | null",
+  "status": "safe | caution | avoid",
+  "confidence_score": 0.0,
+  "matched_allergens": [],
+  "matched_diet_conflicts": [],
+  "extracted_keywords": [],
+  "evidence": [
+    {
+      "japanese_text": "...",
+      "normalized_meaning": "...",
+      "category": "allergen | caution | ingredient | diet_conflict"
+    }
+  ],
+  "summary_ja": "...",
+  "summary_en": "...",
+  "raw_ocr_text": "...",
+  "warnings": [],
+  "processing_mode": "mock | gemini | fallback"
+}
+
+Frontend UX requirements:
+- Mobile-first
+- High trust visual design
+- Minimal, clean, utility-style layout
+- No generic AI gradients or chatbot layout
+- Large buttons and clear states for phone use
+- Skeleton loaders
+- Friendly but serious empty states
+- Strong accessibility and contrast
+- English and Japanese UI copy
+- Result page should highlight the proof/evidence visually
+
+Important product principle:
+Never produce a confident result without evidence.
+Every result screen must show “why”.
+The app should feel transparent and trustworthy.
+
+Error handling requirements:
+Handle:
+- no image
+- invalid image type
+- too-large file
+- blurry or unreadable image
+- OCR provider failure
+- LLM failure
+- partial extraction
+- missing preferences
+Create graceful user-facing error messages and backend logs.
+
+Observability / production readiness:
+- Structured backend logging
+- Env-based config
+- Central settings/config module
+- Health check endpoint
+- Request IDs if possible
+- Clear service error classes
+- Add unit tests for rule engine and parsing logic
+- Add sample fixtures for Japanese OCR text
+
+Mock/demo mode:
+If Gemini or Groq keys are not present:
+- app should still run
+- use mock OCR outputs and mock results
+- seed realistic Japanese food label examples
+- include 3 to 5 sample scans and sample OCR texts
+
+Security / privacy:
+- Validate uploads
+- Do not expose secrets client-side
+- Keep AI provider calls server-side
+- Add privacy copy explaining images are processed temporarily for analysis and are not stored permanently
+- Add rate-limiting placeholder / middleware design
+
+Deployment requirements:
+- Make app runnable inside Replit
+- Also prepare production-ready files:
+  - README.md
+  - .env.example
+  - backend requirements file
+  - frontend package.json
+  - Dockerfile for backend service
+  - docker-compose.yml for local or external deployment
+Even if Docker is not run inside Replit, generate correct Docker artifacts for real deployment later.
+
+Replit-specific requirement:
+Organize this as a serious project that Replit can edit and deploy.
+Use one workspace with clear frontend and backend folders.
+Provide exact run instructions and environment variables.
+
+Environment variables:
+Frontend:
+- NEXT_PUBLIC_API_BASE_URL
+
+Backend:
+- GEMINI_API_KEY
+- GROQ_API_KEY
+- APP_ENV
+- LOG_LEVEL
+- MAX_UPLOAD_MB
+- ALLOWED_IMAGE_TYPES
+
+Pages:
+- Home
+- Scan
+- Result
+- About / How it works
+
+Nice-to-have if time permits:
+- Voice readout of result for accessibility
+- Furigana helper for matched Japanese words
+- Barcode lookup placeholder
+- Toggle for “demo mode” vs “live OCR mode”
+
+Definition of done:
+I should be able to:
+1. launch frontend and backend in Replit
+2. open the app with no login
+3. set temporary session preferences
+4. upload a sample Japanese label image
+5. get a Safe / Caution / Avoid result
+6. see Japanese and English explanation
+7. see extracted evidence and OCR text
+8. run the app fully in mock mode without API keys
+9. confirm that no scan results are stored permanently
+
+Now do the following in order:
+1. create architecture plan
+2. create folder structure
+3. create backend schemas and service interfaces
+4. create frontend pages and UI shell
+5. implement mock mode end-to-end
+6. implement provider abstraction for Gemini and Groq
+7. implement rule engine and decision logic
+8. connect frontend to backend
+9. write README and .env.example
+10. add Dockerfile and docker-compose.yml
+11. ensure the app is demoable with sample data
+
+Important build rule:
+Do not add any database, auth system, or persistent storage unless explicitly asked later.
+Keep the app stateless and production-structured.
