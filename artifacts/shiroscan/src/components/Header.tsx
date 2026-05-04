@@ -50,7 +50,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               EN
             </ToggleGroupItem>
             <ToggleGroupItem value="ja" className="h-full px-3 rounded-none text-xs font-bold data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-              JA
+              JP
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
