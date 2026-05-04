@@ -17,7 +17,7 @@ services:
         value: "*" # Update this to your frontend URL after deployment
 
   # --- Frontend: Truly Free Static Site ---
-  - type: static # Changed from 'web' to 'static'
+  - type: static_site  # Corrected from 'static' to 'static_site'
     name: shiroscan-frontend
     buildCommand: pnpm install --ignore-scripts && pnpm --filter @workspace/shiroscan run build
     staticPublishPath: ./artifacts/shiroscan/dist/public
