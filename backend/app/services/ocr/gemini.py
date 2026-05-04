@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 
 GEMINI_ENDPOINT = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-2.5-flash:generateContent"
+    "gemini-3-flash-preview:generateContent"
 )
 
 OCR_PROMPT = (
@@ -32,7 +32,7 @@ OCR_PROMPT = (
 class GeminiOCRProvider(OCRProvider):
     name = "gemini"
 
-    def __init__(self, api_key: str, *, timeout_seconds: float = 30.0) -> None:
+    def __init__(self, api_key: str, *, timeout_seconds: float = 20.0) -> None:
         self._api_key = api_key
         self._timeout = timeout_seconds
 
