@@ -1,5 +1,22 @@
-const RAW_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "/api";
-const API_BASE = RAW_BASE.endsWith("/") ? RAW_BASE.slice(0, -1) : RAW_BASE;
+const RAW_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "/api";
+
+function getBaseUrl(raw: string): string {
+  let base = raw.replace(/\/$/, "");
+  
+  // If it's a remote host (has a dot) but no protocol, assume https
+  if (base.includes(".") && !base.startsWith("http") && !base.startsWith("/")) {
+    base = `https://${base}`;
+  }
+
+  // If it's a full URL but missing the /api prefix, add it
+  if (base.startsWith("http") && !base.endsWith("/api")) {
+    base = `${base}/api`;
+  }
+  
+  return base;
+}
+
+const API_BASE = getBaseUrl(RAW_URL);
 
 export class ApiError extends Error {
   constructor(
