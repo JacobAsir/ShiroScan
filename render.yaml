@@ -2,6 +2,7 @@ services:
   # --- Backend: FastAPI Web Service ---
   - type: web
     name: shiroscan-backend
+    plan: free   # Explicitly set to free
     env: python
     buildCommand: pip install -r backend/requirements.txt
     startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -15,10 +16,9 @@ services:
       - key: CORS_ALLOWED_ORIGINS
         value: "*" # Update this to your frontend URL after deployment
 
-  # --- Frontend: Always-On Static Site ---
-  - type: web
+  # --- Frontend: Truly Free Static Site ---
+  - type: static # Changed from 'web' to 'static'
     name: shiroscan-frontend
-    runtime: static
     buildCommand: pnpm install --ignore-scripts && pnpm --filter @workspace/shiroscan run build
     staticPublishPath: ./artifacts/shiroscan/dist/public
     envVars:
