@@ -56,10 +56,11 @@ export async function apiPostFormData<T>(
   });
   if (!res.ok) {
     let payload: unknown = undefined;
+    const text = await res.text().catch(() => "");
     try {
-      payload = await res.json();
+      payload = text ? JSON.parse(text) : { detail: `Error ${res.status}` };
     } catch {
-      payload = await res.text().catch(() => "");
+      payload = { detail: text || `Error ${res.status}` };
     }
     const detail =
       typeof payload === "object" && payload !== null && "detail" in payload
@@ -67,5 +68,13 @@ export async function apiPostFormData<T>(
         : `POST ${path} failed: ${res.status}`;
     throw new ApiError(detail, res.status, payload);
   }
-  return (await res.json()) as T;
+  const text = await res.text();
+  if (!text) {
+    throw new ApiError("Empty response from server", res.status);
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch (err) {
+    throw new ApiError("Invalid JSON response from server", res.status, text);
+  }
 }

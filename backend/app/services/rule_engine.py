@@ -27,15 +27,15 @@ class AllergenRule:
 # raw materials" (特定原材料) plus soy and sesame from the recommended list,
 # matching the user's spec. "milk" intentionally matches both 乳 and 乳成分.
 ALLERGEN_RULES: tuple[AllergenRule, ...] = (
-    AllergenRule("egg", ("卵", "鶏卵", "玉子"), "egg"),
-    AllergenRule("milk", ("乳成分", "乳"), "milk"),
-    AllergenRule("wheat", ("小麦",), "wheat"),
+    AllergenRule("egg", ("卵", "鶏卵", "玉子", "たまご", "タマゴ"), "egg"),
+    AllergenRule("milk", ("乳成分", "乳", "牛乳", "脱脂粉乳", "全粉乳", "生乳", "ミルク"), "milk"),
+    AllergenRule("wheat", ("小麦", "こむぎ", "コムギ", "小麦粉"), "wheat"),
     AllergenRule("shrimp", ("えび", "海老", "エビ"), "shrimp"),
     AllergenRule("crab", ("かに", "蟹", "カニ"), "crab"),
-    AllergenRule("peanuts", ("落花生", "ピーナッツ"), "peanuts"),
-    AllergenRule("buckwheat", ("そば", "蕎麦"), "buckwheat"),
+    AllergenRule("peanuts", ("落花生", "ピーナッツ", "ぴーなっつ"), "peanuts"),
+    AllergenRule("buckwheat", ("そば", "蕎麦", "ソバ"), "buckwheat"),
     AllergenRule("walnuts", ("くるみ", "クルミ", "胡桃"), "walnuts"),
-    AllergenRule("soy", ("大豆",), "soy"),
+    AllergenRule("soy", ("大豆", "だいず", "ダイズ", "納豆", "豆腐", "醤油", "しょうゆ", "ショウユ", "味噌", "みそ", "ミソ", "豆乳", "おから", "きな粉"), "soy"),
     AllergenRule("sesame", ("ごま", "ゴマ", "胡麻"), "sesame"),
 )
 

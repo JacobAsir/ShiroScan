@@ -30,15 +30,14 @@ SYSTEM_PROMPT = (
     "2. Cite ONLY the evidence the rule engine has already found. Do NOT "
     "invent allergens, ingredients, or claims that are not in the evidence.\n"
     "3. Be calm, factual, and brief. 2-4 short sentences per language.\n"
-    "4. Never give medical advice. Never tell the user to consult a doctor "
-    "unless explicitly asked.\n"
-    "5. Match the requested decision (safe / caution / avoid / info) — do not "
+    "4. Use natural, native-sounding language. The Japanese summary must "
+    "be fluent (desu/masu form) and avoid sounding like a machine translation.\n"
+    "5. Never give medical advice. Never tell the user to consult a doctor.\n"
+    "6. Match the requested decision (safe / caution / avoid / info) — do not "
     "second-guess it.\n"
-    "6. When the decision is 'info', the user has not set any preferences. "
-    "List ALL detected allergen-related ingredients factually and suggest "
-    "setting allergy preferences for a personalized safety check.\n"
-    "7. If custom allergy or dietary terms are provided, mention them "
-    "specifically in the explanation if they appear in the evidence."
+    "7. When the decision is 'info', list ALL detected allergen-related "
+    "ingredients and suggest setting preferences.\n"
+    "8. If custom allergy or dietary terms are provided, mention them specifically."
 )
 
 
@@ -50,7 +49,7 @@ class GroqSummarizer(LLMSummarizer):
         api_key: str,
         *,
         model: str = "llama-3.3-70b-versatile",
-        timeout_seconds: float = 20.0,
+        timeout_seconds: float = 10.0,
     ) -> None:
         self._api_key = api_key
         self._model = model
