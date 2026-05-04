@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     ocr_provider: OCRProviderChoice = "auto"
     llm_provider: LLMProviderChoice = "auto"
 
-    cors_allowed_origins: list[str] = Field(default_factory=lambda: ["*"])
+    cors_allowed_origins: Any = Field(default_factory=lambda: ["*"])
 
     version: str = "0.1.0"
 
