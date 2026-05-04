@@ -15,7 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import analyze, demo, health
+from app.api.routes import analyze, health
 from app.core.config import get_settings
 from app.core.errors import ShiroScanError
 from app.core.logging import configure_logging, get_logger
@@ -81,7 +81,6 @@ async def shiroscan_error_handler(request: Request, exc: ShiroScanError) -> JSON
 # All routes are mounted under /api so the Replit proxy path matches the
 # in-app URLs (no path rewriting).
 app.include_router(health.router, prefix="/api")
-app.include_router(demo.router, prefix="/api")
 app.include_router(analyze.router, prefix="/api")
 
 

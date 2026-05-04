@@ -8,7 +8,6 @@ out of the LLM step — if Groq fails we fall back to template summaries.
 from __future__ import annotations
 
 from app.core.config import Settings
-from app.core.errors import OCRProviderError
 from app.core.logging import get_logger
 from app.models.analysis import OCRResult
 from app.schemas.request import UserPreferences
@@ -21,7 +20,6 @@ from app.services.decision_engine import decide
 from app.services.llm.base import LLMSummarizer
 from app.services.llm.template import TemplateSummarizer
 from app.services.ocr.base import OCRProvider
-from app.services.ocr.mock import MockOCRProvider
 from app.services.rule_engine import run_rule_engine
 from app.utils.japanese import normalize_text
 
@@ -29,8 +27,6 @@ logger = get_logger(__name__)
 
 
 def _processing_mode_for(provider_name: str) -> ProcessingMode:
-    if provider_name == "mock":
-        return "mock"
     if provider_name == "gemini":
         return "gemini"
     return "fallback"
@@ -46,24 +42,7 @@ class AnalysisPipeline:
         self._ocr = ocr_provider
         self._llm = llm_provider
         self._template_fallback = TemplateSummarizer()
-        self._mock_fallback = MockOCRProvider()
         self._settings = settings
-
-    async def _ocr_with_fallback(
-        self, image_bytes: bytes, content_type: str | None
-    ) -> tuple[OCRResult, list[str]]:
-        warnings: list[str] = []
-        try:
-            return await self._ocr.extract(image_bytes, content_type=content_type), warnings
-        except OCRProviderError as exc:
-            logger.warning("OCR provider %s failed: %s", self._ocr.name, exc)
-            warnings.append(
-                "Primary OCR provider failed; result generated from a fallback."
-            )
-            fallback = await self._mock_fallback.extract(
-                image_bytes, content_type=content_type
-            )
-            return fallback, warnings
 
     async def run(
         self,
@@ -73,15 +52,17 @@ class AnalysisPipeline:
         preferences: UserPreferences,
         product_name_override: str | None = None,
     ) -> AnalysisResponse:
-        # 1. OCR
-        ocr_result, warnings = await self._ocr_with_fallback(image_bytes, content_type)
+        warnings: list[str] = []
+
+        # 1. OCR — real provider only
+        ocr_result = await self._ocr.extract(image_bytes, content_type=content_type)
         normalized = normalize_text(ocr_result.raw_text)
 
         # 2. Rule engine
         rules = run_rule_engine(normalized, preferences)
 
-        # 3. Decision engine
-        decision = decide(ocr_result, rules)
+        # 3. Decision engine (now receives preferences for info mode)
+        decision = decide(ocr_result, rules, preferences)
         warnings.extend(decision.warnings)
 
         # 4. LLM summarization (with template fallback)
@@ -109,7 +90,6 @@ class AnalysisPipeline:
             )
 
         # 5. Build response
-        # Deduplicate evidence by (japanese_text, normalized_meaning) preserving order
         seen: set[tuple[str, str]] = set()
         deduped_evidence: list[EvidenceItem] = []
         for item in rules.evidence:

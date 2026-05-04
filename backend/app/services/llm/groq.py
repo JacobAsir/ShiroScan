@@ -1,7 +1,7 @@
 """Groq-hosted LLM summarizer for fast bilingual explanation generation.
 
 Uses Groq's OpenAI-compatible chat completions API. Model defaults to
-llama-3.1-70b-versatile but can be swapped via the model parameter. Only cites
+llama-3.3-70b-versatile but can be swapped via the model parameter. Only cites
 evidence the rule engine actually found — the prompt forbids inventing claims.
 """
 from __future__ import annotations
@@ -32,8 +32,13 @@ SYSTEM_PROMPT = (
     "3. Be calm, factual, and brief. 2-4 short sentences per language.\n"
     "4. Never give medical advice. Never tell the user to consult a doctor "
     "unless explicitly asked.\n"
-    "5. Match the requested decision (safe / caution / avoid) — do not "
-    "second-guess it."
+    "5. Match the requested decision (safe / caution / avoid / info) — do not "
+    "second-guess it.\n"
+    "6. When the decision is 'info', the user has not set any preferences. "
+    "List ALL detected allergen-related ingredients factually and suggest "
+    "setting allergy preferences for a personalized safety check.\n"
+    "7. If custom allergy or dietary terms are provided, mention them "
+    "specifically in the explanation if they appear in the evidence."
 )
 
 
@@ -44,7 +49,7 @@ class GroqSummarizer(LLMSummarizer):
         self,
         api_key: str,
         *,
-        model: str = "llama-3.1-70b-versatile",
+        model: str = "llama-3.3-70b-versatile",
         timeout_seconds: float = 20.0,
     ) -> None:
         self._api_key = api_key
@@ -67,14 +72,20 @@ class GroqSummarizer(LLMSummarizer):
             }
             for e in rules.evidence
         ]
+        user_prefs: dict[str, Any] = {
+            "allergies": list(preferences.allergies),
+            "dietary": list(preferences.dietary),
+        }
+        if preferences.custom_allergies:
+            user_prefs["custom_allergies"] = list(preferences.custom_allergies)
+        if preferences.custom_dietary:
+            user_prefs["custom_dietary"] = list(preferences.custom_dietary)
+
         payload = {
             "decision": status,
             "matched_allergens": rules.matched_allergens,
             "matched_diet_conflicts": rules.matched_diet_conflicts,
-            "user_preferences": {
-                "allergies": list(preferences.allergies),
-                "dietary": list(preferences.dietary),
-            },
+            "user_preferences": user_prefs,
             "evidence": evidence_payload,
             "ocr_confidence": ocr.confidence,
             "caution_phrases": rules.caution_phrases_found,

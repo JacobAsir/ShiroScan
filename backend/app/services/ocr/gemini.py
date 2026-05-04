@@ -1,6 +1,6 @@
 """Gemini-based OCR provider. Sends the image to Gemini Vision and returns the
-raw extracted Japanese text. Falls back gracefully on errors — the pipeline will
-catch and use the mock provider as a safety net.
+raw extracted Japanese text. Raises OCRProviderError on failures so the
+caller can handle the error appropriately.
 """
 from __future__ import annotations
 

@@ -1,16 +1,24 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/sonner"; // using sonner for toast
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { Layout } from "@/components/Layout";
-import { ResultProvider } from "@/contexts/ResultContext";
 
 import Home from "@/pages/home";
 import Scan from "@/pages/scan";
-import Result from "@/pages/result";
 import About from "@/pages/about";
 import NotFound from "@/pages/not-found";
+import { useEffect } from "react";
+import { useLocation as useWouterLocation } from "wouter";
+
+function ScrollToTop() {
+  const [location] = useWouterLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+  return null;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,10 +32,10 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <Layout>
+      <ScrollToTop />
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/scan" component={Scan} />
-        <Route path="/result" component={Result} />
         <Route path="/about" component={About} />
         <Route component={NotFound} />
       </Switch>
@@ -36,16 +44,22 @@ function Router() {
 }
 
 function App() {
+  // Wake up backend (pre-warm) on load
+  useEffect(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || "";
+    fetch(`${apiUrl}/health`).catch(() => {
+      // Silently ignore wake-up errors
+    });
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <ResultProvider>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-          <Toaster richColors position="top-center" />
-        </TooltipProvider>
-      </ResultProvider>
+      <TooltipProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <Router />
+        </WouterRouter>
+        <Toaster richColors position="top-center" />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

@@ -32,10 +32,11 @@ export const DIETARY_OPTIONS: Array<{
   { key: "lactose_free", label: { en: "Lactose-free", ja: "乳糖なし" } },
 ];
 
-export const STATUS_LABELS: Record<"safe" | "caution" | "avoid", BilingualLabel> = {
+export const STATUS_LABELS: Record<"safe" | "caution" | "avoid" | "info", BilingualLabel> = {
   safe: { en: "Safe", ja: "安全" },
   caution: { en: "Caution", ja: "注意" },
   avoid: { en: "Avoid", ja: "回避" },
+  info: { en: "Scanned", ja: "スキャン完了" },
 };
 
 export const UI_COPY = {
@@ -43,14 +44,6 @@ export const UI_COPY = {
   tagline: {
     en: "Understand any Japanese food label in seconds.",
     ja: "日本の食品ラベルを瞬時に理解。",
-  },
-  disclaimer: {
-    en: "This app provides assistive information only and is not medical advice.",
-    ja: "本アプリは補助的な情報のみを提供し、医学的なアドバイスではありません。",
-  },
-  privacy: {
-    en: "Images are processed temporarily for analysis and never stored.",
-    ja: "画像は分析のために一時的に処理され、保存されることはありません。",
   },
   cta: { en: "Start scanning", ja: "スキャンを開始" },
 } as const;

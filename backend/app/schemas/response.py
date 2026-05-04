@@ -6,8 +6,8 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 EvidenceCategory = Literal["allergen", "caution", "ingredient", "diet_conflict"]
-AnalysisStatus = Literal["safe", "caution", "avoid"]
-ProcessingMode = Literal["mock", "gemini", "fallback"]
+AnalysisStatus = Literal["safe", "caution", "avoid", "info"]
+ProcessingMode = Literal["gemini", "fallback"]
 
 
 class EvidenceItem(BaseModel):
@@ -37,11 +37,3 @@ class HealthResponse(BaseModel):
     ocr_provider: str
     llm_provider: str
     version: str
-
-
-class DemoSample(BaseModel):
-    id: str
-    product_name: str
-    description_en: str
-    description_ja: str
-    preview_text: str

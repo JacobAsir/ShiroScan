@@ -47,3 +47,40 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Environment variables (SECURITY CRITICAL)
+.env
+.env.local
+.env.*
+backend/.env
+backend/.env.*
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+.npm
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ShiroScan Junk
+attached_assets/
+result.json
+test_api.py
+sample_label.jpg
+main.py
+replit.md
+.replit
+.replitignore

@@ -1,5 +1,6 @@
 """Deterministic rule engine: scans normalized Japanese OCR text for known
-allergen keywords, caution phrases, and dietary conflict indicators.
+allergen keywords, caution phrases, dietary conflict indicators, and
+user-defined custom terms.
 
 This runs BEFORE the LLM. The LLM only explains what this engine has already
 found; it cannot override a decision.
@@ -119,7 +120,37 @@ def run_rule_engine(text: str, preferences: UserPreferences) -> RuleEngineResult
             )
         )
 
-    # 3. Dietary conflicts.
+    # 3. Custom allergy term matching — substring search against OCR text.
+    for custom_term in preferences.custom_allergies:
+        term = custom_term.strip()
+        if not term:
+            continue
+        # Try exact substring match (works for Japanese terms)
+        if term in text:
+            key = f"custom:{term}"
+            if key not in result.matched_allergens:
+                result.matched_allergens.append(key)
+            result.evidence.append(
+                EvidenceItem(
+                    japanese_text=_excerpt(text, term),
+                    normalized_meaning=f"Custom allergy: {term}",
+                    category="allergen",
+                )
+            )
+        # Also try case-insensitive match for English terms
+        elif term.lower() in text.lower():
+            key = f"custom:{term}"
+            if key not in result.matched_allergens:
+                result.matched_allergens.append(key)
+            result.evidence.append(
+                EvidenceItem(
+                    japanese_text=_excerpt(text.lower(), term.lower()),
+                    normalized_meaning=f"Custom allergy: {term}",
+                    category="allergen",
+                )
+            )
+
+    # 4. Dietary conflicts.
     if "vegetarian" in user_diet:
         meat = _find_first(text, MEAT_KEYWORDS)
         if meat:
@@ -173,7 +204,35 @@ def run_rule_engine(text: str, preferences: UserPreferences) -> RuleEngineResult
                 )
             )
 
-    # 4. Detect whether we saw a recognizable ingredient panel at all.
+    # 5. Custom dietary term matching.
+    for custom_term in preferences.custom_dietary:
+        term = custom_term.strip()
+        if not term:
+            continue
+        if term in text:
+            key = f"custom:{term}"
+            if key not in result.matched_diet_conflicts:
+                result.matched_diet_conflicts.append(key)
+            result.evidence.append(
+                EvidenceItem(
+                    japanese_text=_excerpt(text, term),
+                    normalized_meaning=f"Custom dietary conflict: {term}",
+                    category="diet_conflict",
+                )
+            )
+        elif term.lower() in text.lower():
+            key = f"custom:{term}"
+            if key not in result.matched_diet_conflicts:
+                result.matched_diet_conflicts.append(key)
+            result.evidence.append(
+                EvidenceItem(
+                    japanese_text=_excerpt(text.lower(), term.lower()),
+                    normalized_meaning=f"Custom dietary conflict: {term}",
+                    category="diet_conflict",
+                )
+            )
+
+    # 6. Detect whether we saw a recognizable ingredient panel at all.
     if "原材料" in text or "成分" in text or result.extracted_keywords:
         result.has_ingredient_panel = True
 

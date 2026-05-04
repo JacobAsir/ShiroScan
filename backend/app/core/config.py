@@ -8,8 +8,8 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-OCRProviderChoice = Literal["auto", "mock", "gemini"]
-LLMProviderChoice = Literal["auto", "template", "groq"]
+OCRProviderChoice = Literal["auto", "gemini"]
+LLMProviderChoice = Literal["auto", "groq"]
 
 
 class Settings(BaseSettings):
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     version: str = "0.1.0"
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", "../.env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",

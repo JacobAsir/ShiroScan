@@ -27,6 +27,14 @@ class UserPreferences(BaseModel):
 
     allergies: list[AllergenKey] = Field(default_factory=list)
     dietary: list[DietaryKey] = Field(default_factory=list)
+    custom_allergies: list[str] = Field(
+        default_factory=list,
+        description="Free-text allergy terms (Japanese or English) beyond the preset list.",
+    )
+    custom_dietary: list[str] = Field(
+        default_factory=list,
+        description="Free-text dietary restriction terms beyond the preset list.",
+    )
     language: UILanguage = "en"
 
     model_config = {"extra": "ignore"}

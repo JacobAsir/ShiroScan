@@ -34,9 +34,7 @@ class LLMProviderError(ShiroScanError):
     code = "llm_provider_error"
 
 
-class SampleNotFoundError(ShiroScanError):
-    status_code = 404
-    code = "sample_not_found"
+
 
 
 class InvalidPreferencesError(ShiroScanError):

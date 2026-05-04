@@ -1,4 +1,4 @@
-export type AnalysisStatus = "safe" | "caution" | "avoid";
+export type AnalysisStatus = "safe" | "caution" | "avoid" | "info";
 
 export type EvidenceCategory =
   | "allergen"
@@ -6,7 +6,7 @@ export type EvidenceCategory =
   | "ingredient"
   | "diet_conflict";
 
-export type ProcessingMode = "mock" | "gemini" | "fallback";
+export type ProcessingMode = "gemini" | "fallback";
 
 export type AllergenKey =
   | "egg"
@@ -31,6 +31,8 @@ export type UILanguage = "en" | "ja";
 export interface UserPreferences {
   allergies: AllergenKey[];
   dietary: DietaryKey[];
+  custom_allergies: string[];
+  custom_dietary: string[];
   language: UILanguage;
 }
 
@@ -44,8 +46,8 @@ export interface AnalysisResult {
   product_name: string | null;
   status: AnalysisStatus;
   confidence_score: number;
-  matched_allergens: AllergenKey[];
-  matched_diet_conflicts: DietaryKey[];
+  matched_allergens: string[];
+  matched_diet_conflicts: string[];
   extracted_keywords: string[];
   evidence: EvidenceItem[];
   summary_ja: string;
@@ -55,11 +57,11 @@ export interface AnalysisResult {
   processing_mode: ProcessingMode;
 }
 
-export interface DemoSample {
+export interface ScanSession {
   id: string;
-  product_name: string;
-  description_en: string;
-  description_ja: string;
-  preview_text: string;
-  thumbnail_emoji?: string;
+  timestamp: number;
+  imageUrl: string;
+  productName: string | null;
+  status: AnalysisStatus;
+  result: AnalysisResult;
 }

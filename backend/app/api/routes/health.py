@@ -12,8 +12,6 @@ router = APIRouter(tags=["health"])
 
 
 def _processing_mode(ocr_name: str) -> str:
-    if ocr_name == "mock":
-        return "mock"
     if ocr_name == "gemini":
         return "gemini"
     return "fallback"

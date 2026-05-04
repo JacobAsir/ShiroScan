@@ -1,8 +1,7 @@
-"""Deterministic template-based summarizer. Always works, no API key required.
+"""Deterministic template-based summarizer — safety-net fallback.
 
-Used as the default mock summarizer AND as the safety-net fallback when
-the Groq summarizer fails. Cites only evidence the rule engine actually found —
-never invents claims.
+Used as the emergency fallback when the Groq LLM summarizer fails.
+Cites only evidence the rule engine actually found — never invents claims.
 """
 from __future__ import annotations
 
@@ -69,6 +68,49 @@ class TemplateSummarizer(LLMSummarizer):
         diets_en = [_DIET_LABELS_EN.get(d, d) for d in rules.matched_diet_conflicts]
         diets_ja = [_DIET_LABELS_JA.get(d, d) for d in rules.matched_diet_conflicts]
 
+        if status == "info":
+            # Informational mode — no preferences set, list everything found
+            en_parts = ["Here's what we found in this product."]
+            ja_parts = ["この商品に含まれるものを以下に示します。"]
+
+            # List all detected allergen-category ingredients
+            ingredient_names_en = []
+            ingredient_names_ja = []
+            for item in rules.evidence:
+                if item.category in ("allergen", "ingredient"):
+                    meaning = item.normalized_meaning
+                    en_name = _ALLERGEN_LABELS_EN.get(meaning, meaning)
+                    ja_name = _ALLERGEN_LABELS_JA.get(meaning, item.japanese_text)
+                    if en_name not in ingredient_names_en:
+                        ingredient_names_en.append(en_name)
+                    if ja_name not in ingredient_names_ja:
+                        ingredient_names_ja.append(ja_name)
+
+            if ingredient_names_en:
+                en_parts.append(
+                    f"Detected allergen-related ingredients: {', '.join(ingredient_names_en)}."
+                )
+                ja_parts.append(
+                    f"検出されたアレルゲン関連成分：{'、'.join(ingredient_names_ja)}。"
+                )
+
+            if rules.caution_phrases_found:
+                en_parts.append(
+                    "A cross-contamination or trace-amount notice was found on the label."
+                )
+                ja_parts.append("ラベルに混入注意の表記があります。")
+
+            en_parts.append(
+                "Set your allergy and dietary preferences for a personalized safety check."
+            )
+            ja_parts.append(
+                "アレルギーや食事制限を設定すると、パーソナライズされた安全チェックができます。"
+            )
+            return Summary(
+                summary_en=" ".join(en_parts).strip(),
+                summary_ja="".join(ja_parts).strip(),
+            )
+
         if status == "avoid":
             en_parts = ["This product is not safe for you."]
             ja_parts = ["この商品はあなたには適していません。"]
@@ -111,14 +153,6 @@ class TemplateSummarizer(LLMSummarizer):
             ]
             en_parts.append("Always confirm with the printed label before consuming.")
             ja_parts.append("実物のラベルでも必ず最終確認してください。")
-
-        if not preferences.allergies and not preferences.dietary:
-            en_parts.append(
-                "No personal preferences were set, so this is a general scan only."
-            )
-            ja_parts.append(
-                "個人設定が未指定のため、一般的なスキャン結果のみを表示しています。"
-            )
 
         return Summary(
             summary_en=" ".join(en_parts).strip(),
