@@ -8,8 +8,8 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-OCRProviderChoice = Literal["auto", "gemini"]
-LLMProviderChoice = Literal["auto", "groq"]
+OCRProviderChoice = Literal["gemini"]
+LLMProviderChoice = Literal["gemini"]
 
 
 class Settings(BaseSettings):
@@ -29,10 +29,9 @@ class Settings(BaseSettings):
     )
 
     gemini_api_key: str | None = None
-    groq_api_key: str | None = None
 
-    ocr_provider: OCRProviderChoice = "auto"
-    llm_provider: LLMProviderChoice = "auto"
+    ocr_provider: OCRProviderChoice = "gemini"
+    llm_provider: LLMProviderChoice = "gemini"
 
     cors_allowed_origins: Any = Field(default_factory=lambda: ["*"])
 

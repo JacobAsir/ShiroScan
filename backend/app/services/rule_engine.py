@@ -29,13 +29,27 @@ class AllergenRule:
 ALLERGEN_RULES: tuple[AllergenRule, ...] = (
     AllergenRule("egg", ("卵", "鶏卵", "玉子", "たまご", "タマゴ"), "egg"),
     AllergenRule("milk", ("乳成分", "乳", "牛乳", "脱脂粉乳", "全粉乳", "生乳", "ミルク"), "milk"),
-    AllergenRule("wheat", ("小麦", "こむぎ", "コムギ", "小麦粉"), "wheat"),
+    AllergenRule(
+        "wheat",
+        # plain wheat + processed wheat derivatives (gluten, wheat protein)
+        ("小麦", "こむぎ", "コムギ", "小麦粉", "小麦たん白", "小麦胚芽", "グルテン"),
+        "wheat",
+    ),
     AllergenRule("shrimp", ("えび", "海老", "エビ"), "shrimp"),
     AllergenRule("crab", ("かに", "蟹", "カニ"), "crab"),
     AllergenRule("peanuts", ("落花生", "ピーナッツ", "ぴーなっつ"), "peanuts"),
     AllergenRule("buckwheat", ("そば", "蕎麦", "ソバ"), "buckwheat"),
     AllergenRule("walnuts", ("くるみ", "クルミ", "胡桃"), "walnuts"),
-    AllergenRule("soy", ("大豆", "だいず", "ダイズ", "納豆", "豆腐", "醤油", "しょうゆ", "ショウユ", "味噌", "みそ", "ミソ", "豆乳", "おから", "きな粉"), "soy"),
+    AllergenRule(
+        "soy",
+        # plain soy + fermented soy products + soy-derived proteins
+        (
+            "大豆", "だいず", "ダイズ", "納豆", "豆腐", "醤油", "しょうゆ", "ショウユ",
+            "味噌", "みそ", "ミソ", "豆乳", "おから", "きな粉",
+            "大豆たん白", "植物性たん白", "脱脂大豆",
+        ),
+        "soy",
+    ),
     AllergenRule("sesame", ("ごま", "ゴマ", "胡麻"), "sesame"),
 )
 
@@ -53,9 +67,64 @@ PORK_KEYWORDS = ("豚", "ポーク", "ラード", "豚肉", "豚脂", "ベーコ
 MEAT_KEYWORDS = (
     "豚", "牛", "鶏", "肉", "ベーコン", "ハム", "ソーセージ", "ゼラチン",
     "鶏ガラ", "ポーク", "ビーフ", "チキン", "魚", "鰹", "鯖", "魚介",
+    # dashi / stock / meat extracts common in prefab foods
+    "だし", "鰹節", "かつお節", "ブイヨン",
+    "チキンエキス", "ビーフエキス", "豚骨エキス", "魚介エキス", "鶏エキス", "魚エキス",
 )
 DAIRY_KEYWORDS = ("乳", "乳成分", "バター", "チーズ", "ヨーグルト", "クリーム", "脱脂粉乳", "練乳")
 ALCOHOL_KEYWORDS = ("酒精", "アルコール", "ワイン", "みりん", "料理酒")
+
+# ---------------------------------------------------------------------------
+# Informational scans — these don't trigger allergen/diet flags on their own
+# but are surfaced in the Evidence panel so users know what's in the product.
+# ---------------------------------------------------------------------------
+
+# Food additives commonly found in prefab / ready-made Japanese foods.
+# Tuple format: (Japanese term, English meaning)
+ADDITIVE_KEYWORDS: tuple[tuple[str, str], ...] = (
+    ("調味料(アミノ酸等)", "Flavor enhancer (amino acid / MSG-type)"),
+    ("調味料（アミノ酸等）", "Flavor enhancer (amino acid / MSG-type)"),  # full-width parens
+    ("着色料", "Coloring / food dye"),
+    ("保存料", "Preservative"),
+    ("増粘剤", "Thickener / stabilizer"),
+    ("乳化剤", "Emulsifier (may contain soy lecithin)"),
+    ("香料", "Artificial flavoring"),
+    ("甘味料", "Artificial sweetener"),
+    ("酸化防止剤", "Antioxidant additive"),
+    ("発色剤", "Color fixative (nitrite-based)"),
+    ("膨張剤", "Leavening / raising agent"),
+    ("pH調整剤", "pH adjuster"),
+    ("たん白加水分解物", "Hydrolyzed protein (may contain soy or wheat)"),
+)
+
+# Spices and seasonings — flagged informatively for sensitivity-aware users.
+SPICE_KEYWORDS: tuple[tuple[str, str], ...] = (
+    ("香辛料", "Spices / mixed seasonings"),
+    ("カレー粉", "Curry powder"),
+    ("こしょう", "Black pepper"),
+    ("胡椒", "Black pepper"),
+    ("唐辛子", "Chili pepper"),
+    ("にんにく", "Garlic"),
+    ("ニンニク", "Garlic"),
+    ("生姜", "Ginger"),
+    ("しょうが", "Ginger"),
+    ("ショウガ", "Ginger"),
+    ("山椒", "Japanese pepper (sansho)"),
+    ("七味", "Shichimi spice blend"),
+)
+
+# Hidden stock / sauce derivatives common in ready-made / konbini foods.
+STOCK_KEYWORDS: tuple[tuple[str, str], ...] = (
+    ("昆布", "Kombu seaweed (stock base)"),
+    ("鰹だし", "Bonito dashi (fish-derived stock)"),
+    ("昆布だし", "Kombu dashi (seaweed-derived stock)"),
+    ("煮干", "Dried sardines (niboshi — fish stock)"),
+    ("いわし", "Sardine (fish-derived)"),
+    ("あご", "Flying fish (ago dashi — fish stock)"),
+    ("たれ", "Sauce / tare (compound seasoning)"),
+    ("ソース", "Sauce (may contain wheat or soy)"),
+    ("ドレッシング", "Dressing (may contain dairy, egg, or soy)"),
+)
 
 
 def _find_first(text: str, needles: tuple[str, ...]) -> str | None:
@@ -232,7 +301,46 @@ def run_rule_engine(text: str, preferences: UserPreferences) -> RuleEngineResult
                 )
             )
 
-    # 6. Detect whether we saw a recognizable ingredient panel at all.
+    # 6. Additives scan — surfaces flavor enhancers, preservatives, colorings etc.
+    for term, meaning in ADDITIVE_KEYWORDS:
+        if term in text:
+            if term not in result.extracted_keywords:
+                result.extracted_keywords.append(term)
+            result.evidence.append(
+                EvidenceItem(
+                    japanese_text=_excerpt(text, term),
+                    normalized_meaning=meaning,
+                    category="additive",
+                )
+            )
+
+    # 7. Spice scan — informational flag for spice-sensitive users.
+    for term, meaning in SPICE_KEYWORDS:
+        if term in text:
+            if term not in result.extracted_keywords:
+                result.extracted_keywords.append(term)
+            result.evidence.append(
+                EvidenceItem(
+                    japanese_text=_excerpt(text, term),
+                    normalized_meaning=meaning,
+                    category="spice",
+                )
+            )
+
+    # 8. Hidden stock / sauce derivatives — informational flag.
+    for term, meaning in STOCK_KEYWORDS:
+        if term in text:
+            if term not in result.extracted_keywords:
+                result.extracted_keywords.append(term)
+            result.evidence.append(
+                EvidenceItem(
+                    japanese_text=_excerpt(text, term),
+                    normalized_meaning=meaning,
+                    category="stock",
+                )
+            )
+
+    # 9. Detect whether we saw a recognizable ingredient panel at all.
     if "原材料" in text or "成分" in text or result.extracted_keywords:
         result.has_ingredient_panel = True
 

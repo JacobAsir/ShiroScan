@@ -3,7 +3,7 @@
    image bytes -> OCR -> rule engine -> decision -> LLM summary -> AnalysisResponse
 
 Each step is isolated and falls back gracefully. The pipeline never raises
-out of the LLM step — if Groq fails we fall back to template summaries.
+out of the LLM step — if Gemini summarizer fails we fall back to template summaries.
 """
 from __future__ import annotations
 

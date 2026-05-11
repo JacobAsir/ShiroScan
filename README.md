@@ -6,7 +6,7 @@ Understand any Japanese food label in seconds. ShiroScan is a professional-grade
 
 ## ✨ Key Features
 
-- **Multi-Modal AI Analysis:** Combines high-accuracy OCR (Gemini 2.0) with advanced LLM reasoning (Groq/Llama 3.3) for precise ingredient decoding.
+- **Multi-Modal AI Analysis:** Combines high-accuracy OCR (Gemini Vision) with fast bilingual LLM reasoning (Gemini Flash) for precise ingredient decoding — all powered by a single Gemini API key.
 - **Split-Panel Dashboard:** Professional desktop UI with independent scrolling for image/preferences and analysis results.
 - **Custom Allergies & Dietary Rules:** Beyond standard presets, add your own custom terms (e.g., "Soy", "Pork", "Alcohol") which are matched via substring analysis.
 - **"Info Mode" (Guest Scan):** No preferences? No problem. ShiroScan will provide a factual breakdown of all detected allergens and notable ingredients.
@@ -17,8 +17,8 @@ Understand any Japanese food label in seconds. ShiroScan is a professional-grade
 
 ### Backend
 - **Framework:** FastAPI (Python 3.10+)
-- **OCR Engine:** Google Gemini Pro Vision
-- **LLM Engine:** Groq (Llama-3.3-70b-versatile)
+- **OCR Engine:** Google Gemini Vision (image → Japanese text)
+- **LLM Engine:** Google Gemini Flash-Lite (rule evidence → bilingual summary)
 - **Settings:** Pydantic V2 & Pydantic-Settings
 - **Server:** Uvicorn
 
@@ -37,8 +37,7 @@ Understand any Japanese food label in seconds. ShiroScan is a professional-grade
 - **Python 3.10+**
 - **Node.js 18+**
 - **API Keys:**
-  - [Google Gemini API Key](https://aistudio.google.com/app/apikey) (Free tier available)
-  - [Groq API Key](https://console.groq.com/keys) (High-speed inference)
+  - [Google Gemini API Key](https://aistudio.google.com/app/apikey) (Free tier available — covers both OCR and summarization)
 
 ### 1. Clone the Repository
 ```bash
@@ -55,10 +54,9 @@ pip install -r requirements.txt
 ```
 
 **Configure Environment:**
-Create a `.env` file in the `backend/` directory based on `.env.example`:
+Create a `.env` file in the root directory based on `.env.example`:
 ```env
 GEMINI_API_KEY=your_gemini_key_here
-GROQ_API_KEY=your_groq_key_here
 APP_ENV=production
 ```
 
@@ -89,7 +87,7 @@ ShiroScan is optimized for deployment on **Render** using the included `render.y
 ### One-Click Deployment
 1. Connect your GitHub repository to [Render](https://dashboard.render.com).
 2. Render will automatically detect the `render.yaml` file and suggest a **Blueprint** deployment.
-3. Set your `GEMINI_API_KEY` and `GROQ_API_KEY` in the Render dashboard when prompted.
+3. Set your `GEMINI_API_KEY` in the Render dashboard when prompted.
 
 ### How it handles "Sleep"
 On the Render free tier, the backend service sleeps after 15 minutes of inactivity. To ensure a smooth user experience:

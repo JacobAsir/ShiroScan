@@ -8,7 +8,7 @@ from fastapi import Depends
 from app.core.config import Settings, get_settings
 from app.core.logging import get_logger
 from app.services.llm.base import LLMSummarizer
-from app.services.llm.groq import GroqSummarizer
+from app.services.llm.gemini import GeminiSummarizer
 from app.services.ocr.base import OCRProvider
 from app.services.ocr.gemini import GeminiOCRProvider
 from app.services.pipeline import AnalysisPipeline
@@ -26,12 +26,13 @@ def _resolve_ocr_provider(settings: Settings) -> OCRProvider:
 
 
 def _resolve_llm_provider(settings: Settings) -> LLMSummarizer:
-    if not settings.groq_api_key:
+    if not settings.gemini_api_key:
         raise RuntimeError(
-            "GROQ_API_KEY is required. Set it in your .env file. "
-            "Get one at https://console.groq.com/keys"
+            "GEMINI_API_KEY is required for both OCR and summarization. "
+            "Set it in your .env file. "
+            "Get one at https://aistudio.google.com/app/apikey"
         )
-    return GroqSummarizer(settings.groq_api_key)
+    return GeminiSummarizer(settings.gemini_api_key)
 
 
 @lru_cache(maxsize=1)
