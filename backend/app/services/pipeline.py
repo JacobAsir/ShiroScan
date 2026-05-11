@@ -21,6 +21,7 @@ from app.services.llm.base import LLMSummarizer
 from app.services.llm.template import TemplateSummarizer
 from app.services.ocr.base import OCRProvider
 from app.services.rule_engine import run_rule_engine
+from app.utils.image import compress_for_ocr
 from app.utils.japanese import normalize_text
 
 logger = get_logger(__name__)
@@ -54,8 +55,16 @@ class AnalysisPipeline:
     ) -> AnalysisResponse:
         warnings: list[str] = []
 
+        # 0. Compress image for faster upload to Gemini (resize + JPEG)
+        ocr_bytes, ocr_mime = compress_for_ocr(image_bytes)
+        logger.info(
+            "Image compressed: %dKB -> %dKB",
+            len(image_bytes) // 1024,
+            len(ocr_bytes) // 1024,
+        )
+
         # 1. OCR — real provider only
-        ocr_result = await self._ocr.extract(image_bytes, content_type=content_type)
+        ocr_result = await self._ocr.extract(ocr_bytes, content_type=ocr_mime)
         normalized = normalize_text(ocr_result.raw_text)
 
         # 2. Rule engine

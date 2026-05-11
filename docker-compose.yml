@@ -28,7 +28,9 @@ services:
     ports:
       - "5173:5173"
     environment:
-      VITE_API_BASE_URL: http://localhost:8080/api
+      # In Docker, the Vite dev proxy must target the 'api' service name
+      VITE_DEV_API_PROXY: http://api:8080
+      VITE_API_URL: http://localhost:8080
     depends_on:
       api:
         condition: service_healthy

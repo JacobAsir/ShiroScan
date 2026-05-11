@@ -4,7 +4,10 @@ export type EvidenceCategory =
   | "allergen"
   | "caution"
   | "ingredient"
-  | "diet_conflict";
+  | "diet_conflict"
+  | "additive"
+  | "spice"
+  | "stock";
 
 export type ProcessingMode = "gemini" | "fallback";
 

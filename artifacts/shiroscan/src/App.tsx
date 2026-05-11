@@ -46,8 +46,10 @@ function Router() {
 function App() {
   // Wake up backend (pre-warm) on load
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || "";
-    fetch(`${apiUrl}/health`).catch(() => {
+    const raw = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
+    // In dev, use the Vite proxy path; in production, hit the backend directly
+    const healthUrl = raw ? `${raw.replace(/\/$/, "")}/api/health` : "/api/health";
+    fetch(healthUrl).catch(() => {
       // Silently ignore wake-up errors
     });
   }, []);

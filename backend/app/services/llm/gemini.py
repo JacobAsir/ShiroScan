@@ -20,9 +20,12 @@ from app.services.llm.base import LLMSummarizer, Summary
 
 logger = get_logger(__name__)
 
+# gemini-2.0-flash-lite: fastest text model, ideal for structured JSON generation.
+# The summarization task is simple (structured input → short bilingual output),
+# so we don't need the heavier flash model.
 GEMINI_LLM_ENDPOINT = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-3-flash-preview:generateContent"
+    "gemini-2.0-flash-lite:generateContent"
 )
 
 SYSTEM_INSTRUCTION = (
@@ -55,10 +58,16 @@ class GeminiSummarizer(LLMSummarizer):
         self,
         api_key: str,
         *,
-        timeout_seconds: float = 15.0,
+        timeout_seconds: float = 20.0,
     ) -> None:
         self._api_key = api_key
         self._timeout = timeout_seconds
+        self._client: httpx.AsyncClient | None = None
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(timeout=self._timeout)
+        return self._client
 
     def _build_user_prompt(
         self,
@@ -134,10 +143,10 @@ class GeminiSummarizer(LLMSummarizer):
         params = {"key": self._api_key}
 
         try:
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
-                resp = await client.post(
-                    GEMINI_LLM_ENDPOINT, params=params, json=body
-                )
+            client = await self._get_client()
+            resp = await client.post(
+                GEMINI_LLM_ENDPOINT, params=params, json=body
+            )
             if resp.status_code >= 400:
                 logger.warning(
                     "Gemini LLM returned %s: %s", resp.status_code, resp.text[:200]

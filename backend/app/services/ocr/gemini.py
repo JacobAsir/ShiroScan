@@ -16,9 +16,12 @@ from app.services.ocr.base import OCRProvider
 
 logger = get_logger(__name__)
 
+# Use gemini-2.0-flash-lite for OCR — fastest model with vision support,
+# no "thinking" overhead, and accurate enough for Japanese text extraction.
+# Same model used for LLM summarization = simpler, faster, one less quota bucket.
 GEMINI_ENDPOINT = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-3-flash-preview:generateContent"
+    "gemini-2.0-flash-lite:generateContent"
 )
 
 OCR_PROMPT = (
@@ -32,9 +35,18 @@ OCR_PROMPT = (
 class GeminiOCRProvider(OCRProvider):
     name = "gemini"
 
-    def __init__(self, api_key: str, *, timeout_seconds: float = 20.0) -> None:
+    def __init__(self, api_key: str, *, timeout_seconds: float = 30.0) -> None:
         self._api_key = api_key
         self._timeout = timeout_seconds
+        # Reuse a single async client for connection pooling (HTTP/2, keep-alive)
+        self._client: httpx.AsyncClient | None = None
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(
+                timeout=self._timeout,
+            )
+        return self._client
 
     async def extract(self, image_bytes: bytes, *, content_type: str | None) -> OCRResult:
         mime = content_type or "image/jpeg"
@@ -57,8 +69,8 @@ class GeminiOCRProvider(OCRProvider):
         }
         params = {"key": self._api_key}
         try:
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
-                resp = await client.post(GEMINI_ENDPOINT, params=params, json=body)
+            client = await self._get_client()
+            resp = await client.post(GEMINI_ENDPOINT, params=params, json=body)
             if resp.status_code >= 400:
                 logger.warning(
                     "Gemini OCR returned %s: %s", resp.status_code, resp.text[:200]

@@ -9,6 +9,11 @@ from PIL import Image, UnidentifiedImageError
 
 from app.core.errors import InvalidImageError, UploadTooLargeError
 
+# Max dimension for images sent to Gemini Vision. Larger images are resized
+# proportionally. 1024px is plenty for reading text on a food label and
+# dramatically reduces base64 payload size (and thus API latency).
+MAX_OCR_DIMENSION = 1024
+
 
 def validate_image_bytes(
     data: bytes,
@@ -36,6 +41,34 @@ def validate_image_bytes(
         raise InvalidImageError(
             "The uploaded file does not appear to be a readable image."
         ) from exc
+
+
+def compress_for_ocr(data: bytes) -> tuple[bytes, str]:
+    """Resize and compress image for OCR. Returns (jpeg_bytes, 'image/jpeg').
+
+    - Resizes to max 1024px on longest side (preserving aspect ratio)
+    - Converts to JPEG at quality 85
+    - Typical 700KB PNG → ~80-120KB JPEG = 5-8x smaller base64 payload
+    """
+    img = Image.open(io.BytesIO(data))
+    # Convert RGBA/P to RGB for JPEG
+    if img.mode in ("RGBA", "P", "LA"):
+        img = img.convert("RGB")
+    elif img.mode != "RGB":
+        img = img.convert("RGB")
+
+    # Resize if larger than MAX_OCR_DIMENSION
+    w, h = img.size
+    if max(w, h) > MAX_OCR_DIMENSION:
+        ratio = MAX_OCR_DIMENSION / max(w, h)
+        new_size = (int(w * ratio), int(h * ratio))
+        img = img.resize(new_size, Image.LANCZOS)
+
+    # Compress to JPEG
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=85, optimize=True)
+    buf.seek(0)
+    return buf.read(), "image/jpeg"
 
 
 @contextmanager

@@ -54,7 +54,7 @@ export default defineConfig({
       strict: true,
     },
     proxy: {
-      "/api": "http://127.0.0.1:8080",
+      "/api": process.env.VITE_DEV_API_PROXY || "http://127.0.0.1:8080",
     },
   },
   preview: {
