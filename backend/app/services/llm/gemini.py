@@ -28,8 +28,10 @@ GEMINI_LLM_ENDPOINT = (
 SYSTEM_INSTRUCTION = (
     "You are ShiroScan's explanation engine. You explain Japanese food-label "
     "analysis results to users in plain language. STRICT RULES:\n"
-    "1. Output ONLY a single JSON object with exactly two string fields: "
-    "summary_en (English) and summary_ja (Japanese).\n"
+    "1. Output ONLY a single JSON object with EXACTLY three fields:\n"
+    "   - summary_en (string, English)\n"
+    "   - summary_ja (string, Japanese)\n"
+    "   - evidence_translations (object: mapping each 'japanese_text' from the evidence array to its full English sentence translation).\n"
     "2. Cite ONLY the evidence the rule engine has already found. Do NOT "
     "invent allergens, ingredients, or claims that are not in the evidence.\n"
     "3. Be calm, factual, and brief. 2-4 short sentences per language.\n"
@@ -151,6 +153,7 @@ class GeminiSummarizer(LLMSummarizer):
             return Summary(
                 summary_en=str(parsed.get("summary_en", "")).strip(),
                 summary_ja=str(parsed.get("summary_ja", "")).strip(),
+                evidence_translations=parsed.get("evidence_translations") or {},
             )
         except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
             raise LLMProviderError(

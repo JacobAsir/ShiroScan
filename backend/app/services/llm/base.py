@@ -13,6 +13,7 @@ from app.schemas.response import AnalysisStatus
 class Summary:
     summary_en: str
     summary_ja: str
+    evidence_translations: dict[str, str] | None = None
 
 
 class LLMSummarizer(abc.ABC):

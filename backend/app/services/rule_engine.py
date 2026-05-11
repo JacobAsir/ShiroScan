@@ -54,12 +54,11 @@ ALLERGEN_RULES: tuple[AllergenRule, ...] = (
 )
 
 
-# "を含む" patterns — these flag presence even when buried in a sentence.
 CAUTION_PATTERNS: tuple[tuple[str, str], ...] = (
-    (r"一部に[^。\n]{0,40}?を含む", "Contains: notice within ingredients"),
+    (r"一部に[^。\n]{0,40}?を含む", "Label Safety Declaration (Contains trace/sub-ingredients)"),
     (r"同一工場で[^。\n]{0,40}?を含む製品を製造", "Cross-contamination notice (same factory)"),
     (r"本品製造工場では[^。\n]{0,40}?を含む製品を生産", "Cross-contamination notice (same facility)"),
-    (r"[^。\n]{1,20}を含む", "Contains: explicit declaration"),
+    (r"[^。\n]{1,20}を含む", "Manufacturer Allergen Warning"),
 )
 
 # Dietary conflict rules.

@@ -93,11 +93,21 @@ class AnalysisPipeline:
         seen: set[tuple[str, str]] = set()
         deduped_evidence: list[EvidenceItem] = []
         for item in rules.evidence:
-            key = (item.japanese_text, item.normalized_meaning)
+            meaning = item.normalized_meaning
+            if summary.evidence_translations and item.japanese_text in summary.evidence_translations:
+                meaning = summary.evidence_translations[item.japanese_text]
+
+            key = (item.japanese_text, meaning)
             if key in seen:
                 continue
             seen.add(key)
-            deduped_evidence.append(item)
+            deduped_evidence.append(
+                EvidenceItem(
+                    japanese_text=item.japanese_text,
+                    normalized_meaning=meaning,
+                    category=item.category,
+                )
+            )
 
         return AnalysisResponse(
             product_name=product_name_override or ocr_result.product_name_hint,

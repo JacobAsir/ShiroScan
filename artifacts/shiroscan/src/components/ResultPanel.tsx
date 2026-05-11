@@ -11,6 +11,16 @@ interface ResultPanelProps {
   result: AnalysisResult;
 }
 
+const CATEGORY_COLORS: Record<string, string> = {
+  allergen: "text-red-700 bg-red-100 border-red-200 dark:text-red-400 dark:bg-red-900/30 dark:border-red-800",
+  caution: "text-orange-700 bg-orange-100 border-orange-200 dark:text-orange-400 dark:bg-orange-900/30 dark:border-orange-800",
+  diet_conflict: "text-yellow-700 bg-yellow-100 border-yellow-200 dark:text-yellow-400 dark:bg-yellow-900/30 dark:border-yellow-800",
+  ingredient: "text-blue-700 bg-blue-100 border-blue-200 dark:text-blue-400 dark:bg-blue-900/30 dark:border-blue-800",
+  additive: "text-purple-700 bg-purple-100 border-purple-200 dark:text-purple-400 dark:bg-purple-900/30 dark:border-purple-800",
+  spice: "text-amber-700 bg-amber-100 border-amber-200 dark:text-amber-400 dark:bg-amber-900/30 dark:border-amber-800",
+  stock: "text-emerald-700 bg-emerald-100 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-900/30 dark:border-emerald-800",
+};
+
 export function ResultPanel({ result }: ResultPanelProps) {
   const { preferences } = usePreferences();
   const l = preferences.language;
@@ -113,17 +123,22 @@ export function ResultPanel({ result }: ResultPanelProps) {
                 }, {} as Record<string, typeof result.evidence>)
               ).map(([category, items]) => (
                 <div key={category} className="space-y-2">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pl-1">
-                    {category.replace('_', ' ')}
-                  </h4>
+                  <div className="flex items-center">
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${CATEGORY_COLORS[category] || "text-slate-700 bg-slate-100 border-slate-200"}`}>
+                      {category.replace('_', ' ')}
+                    </span>
+                  </div>
                   <div className="grid grid-cols-1 gap-2">
                     {items.map((item, idx) => (
                       <div key={idx} className="flex flex-col p-3 rounded-xl border bg-card shadow-sm">
                         <span className="text-sm font-bold text-foreground tracking-wide mb-0.5">
-                          {item.japanese_text}
+                          {l === "en" ? item.normalized_meaning : item.japanese_text}
                         </span>
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <ArrowLeft className="w-2.5 h-2.5 inline rotate-180" /> {item.normalized_meaning}
+                          <ArrowLeft className="w-2.5 h-2.5 inline rotate-180 shrink-0" />
+                          <span className="truncate">
+                            {l === "en" ? item.japanese_text : item.normalized_meaning}
+                          </span>
                         </span>
                       </div>
                     ))}
