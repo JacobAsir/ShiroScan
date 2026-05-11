@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 
 GEMINI_ENDPOINT = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-3-flash-preview:generateContent"
+    "gemini-2.0-flash:generateContent"
 )
 
 OCR_PROMPT = (

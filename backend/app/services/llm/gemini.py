@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 
 GEMINI_LLM_ENDPOINT = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-2.0-flash-lite:generateContent"
+    "gemini-2.0-flash:generateContent"
 )
 
 SYSTEM_INSTRUCTION = (

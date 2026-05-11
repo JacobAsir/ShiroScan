@@ -5,7 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-EvidenceCategory = Literal["allergen", "caution", "ingredient", "diet_conflict"]
+EvidenceCategory = Literal["allergen", "caution", "ingredient", "diet_conflict", "additive", "spice", "stock"]
 AnalysisStatus = Literal["safe", "caution", "avoid", "info"]
 ProcessingMode = Literal["gemini", "fallback"]
 
