@@ -136,16 +136,6 @@ export function ResultPanel({ result }: ResultPanelProps) {
           </div>
         )}
 
-        {/* Warnings */}
-        {result.warnings.length > 0 && (
-          <div className="space-y-1.5">
-            {result.warnings.map((w, i) => (
-              <div key={i} className="text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg px-3 py-2 border border-yellow-200 dark:border-yellow-800">
-                ⚠️ {w}
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* Raw OCR */}
         <Accordion type="single" collapsible className="w-full">
