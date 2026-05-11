@@ -95,7 +95,7 @@ export function ResultPanel({ result }: ResultPanelProps) {
         )}
 
         {/* Evidence */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           <h3 className="text-sm font-bold">
             {pickLang({ en: "Evidence from Label", ja: "ラベルからの証拠" }, l)}
           </h3>
@@ -104,18 +104,30 @@ export function ResultPanel({ result }: ResultPanelProps) {
               {pickLang({ en: "No specific ingredients flagged.", ja: "特筆すべき成分は検出されませんでした。" }, l)}
             </p>
           ) : (
-            <div className="grid grid-cols-1 gap-2">
-              {result.evidence.map((item, idx) => (
-                <div key={idx} className="flex flex-col p-3 rounded-xl border bg-card shadow-sm">
-                  <span className="text-sm font-bold text-foreground tracking-wide mb-0.5">
-                    {item.japanese_text}
-                  </span>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <ArrowLeft className="w-2.5 h-2.5 inline rotate-180" /> {item.normalized_meaning}
-                  </span>
-                  <Badge variant="secondary" className="w-fit mt-1.5 text-[9px] uppercase">
-                    {item.category}
-                  </Badge>
+            <div className="space-y-4">
+              {Object.entries(
+                result.evidence.reduce((acc, item) => {
+                  if (!acc[item.category]) acc[item.category] = [];
+                  acc[item.category].push(item);
+                  return acc;
+                }, {} as Record<string, typeof result.evidence>)
+              ).map(([category, items]) => (
+                <div key={category} className="space-y-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pl-1">
+                    {category.replace('_', ' ')}
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {items.map((item, idx) => (
+                      <div key={idx} className="flex flex-col p-3 rounded-xl border bg-card shadow-sm">
+                        <span className="text-sm font-bold text-foreground tracking-wide mb-0.5">
+                          {item.japanese_text}
+                        </span>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <ArrowLeft className="w-2.5 h-2.5 inline rotate-180" /> {item.normalized_meaning}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
