@@ -126,8 +126,8 @@ class GeminiSummarizer(LLMSummarizer):
                 }
             ],
             "generationConfig": {
-                "temperature": 0.2,
-                "maxOutputTokens": 600,
+                "temperature": 0.1,
+                "maxOutputTokens": 1500,
                 "responseMimeType": "application/json",
             },
         }
